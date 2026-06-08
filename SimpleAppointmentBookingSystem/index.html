@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Simple Appointment Booking System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', 'Inter', Helvetica, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            min-height: 100vh;
+            padding: 2rem 1.5rem;
+        }
+
+        /* main container */
+        .booking-app {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        /* header */
+        .app-header {
+            background: #0f2b3d;
+            color: white;
+            padding: 1.8rem 2rem;
+            text-align: center;
+        }
+
+        .app-header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: -0.3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .app-header p {
+            font-size: 0.9rem;
+            opacity: 0.85;
+            margin-top: 8px;
+        }
+
+        /* date & stats bar */
+        .control-bar {
+            background: #ffffff;
+            padding: 1rem 2rem;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            border-bottom: 1px solid #e2edf2;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+        }
+
+        .date-selector {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f1f5f9;
+            padding: 0.4rem 1.2rem;
+            border-radius: 60px;
+        }
+
+        .date-selector label {
+            font-weight: 600;
+            color: #1f4e6e;
+        }
+
+        #appointmentDate {
+            border: 1px solid #cbdde6;
+            padding: 0.5rem 1rem;
+            border-radius: 2rem;
+            font-size: 0.9rem;
+            background: white;
+            cursor: pointer;
+            outline: none;
+            font-weight: 500;
+        }
+
+        #appointmentDate:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 2px rgba(44,125,160,0.2);
+        }
+
+        .stats-badge {
+            background: #eef2f8;
+            padding: 0.4rem 1.2rem;
+            border-radius: 40px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #1f4e6e;
+        }
+
+        .stats-badge span {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #0c4e6e;
+        }
+
+        /* two column layout */
+        .dashboard {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        /* slots panel */
+        .slots-panel {
+            flex: 2.2;
+            min-width: 260px;
+            padding: 2rem 1.8rem;
+            background: #fefefe;
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e2b3c;
+            border-left: 4px solid #2c7da0;
+            padding-left: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .time-slots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 0.9rem;
+        }
+
+        .slot-card {
+            background: white;
+            border: 1px solid #dce7ef;
+            border-radius: 1.2rem;
+            padding: 0.8rem 0.3rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: #1a4b64;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .slot-card:hover:not(.slot-booked) {
+            background: #e1f0fa;
+            border-color: #2c7da0;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px -8px rgba(0,0,0,0.15);
+        }
+
+        .slot-booked {
+            background: #f1f5f9;
+            border-color: #dee6ec;
+            color: #94a9b8;
+            cursor: not-allowed;
+            text-decoration: line-through;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .slot-booked::after {
+            content: "🔒";
+            font-size: 0.7rem;
+            margin-left: 6px;
+            opacity: 0.6;
+        }
+
+        .slot-selected {
+            background: #2c7da0;
+            border-color: #1f5e7a;
+            color: white;
+            box-shadow: 0 4px 10px rgba(44,125,160,0.3);
+            transform: scale(0.98);
+        }
+
+        /* booking form panel */
+        .booking-panel {
+            flex: 1.2;
+            min-width: 280px;
+            background: #fafdff;
+            border-left: 1px solid #e6edf3;
+            padding: 2rem 1.8rem;
+        }
+
+        .booking-panel h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #1f3b4c;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-group {
+            margin-bottom: 1.2rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #3b6e8b;
+            margin-bottom: 0.3rem;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border-radius: 1rem;
+            border: 1px solid #cde0ea;
+            background: white;
+            font-size: 0.9rem;
+            transition: 0.2s;
+            outline: none;
+        }
+
+        .input-group input:focus {
+            border-color: #2c7da0;
+            box-shadow: 0 0 0 3px rgba(44,125,160,0.1);
+        }
+
+        .selected-slot-info {
+            background: #eef3fc;
+            padding: 0.8rem 1rem;
+            border-radius: 1.2rem;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+            border-left: 3px solid #2c7da0;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: #1e5f7a;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 2rem;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-top: 0.3rem;
+        }
+
+        .btn-primary:hover {
+            background: #0e4a62;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #e9f0f5;
+            color: #265e7a;
+            margin-top: 0.7rem;
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: #dce6ef;
+        }
+
+        /* appointments list */
+        .appointments-list {
+            margin-top: 1.8rem;
+            border-top: 1px solid #e0ecf3;
+            padding-top: 1.3rem;
+        }
+
+        .appointments-list h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #2a6f8f;
+            margin-bottom: 0.8rem;
+            letter-spacing: 0.3px;
+        }
+
+        .booking-item {
+            background: white;
+            border-radius: 1rem;
+            padding: 0.6rem 0.9rem;
+            margin-bottom: 0.6rem;
+            border: 1px solid #e3edf4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .booking-info {
+            font-weight: 600;
+            color: #0f3b4f;
+        }
+
+        .booking-info small {
+            font-weight: normal;
+            color: #5e8da8;
+            font-size: 0.7rem;
+        }
+
+        .cancel-btn {
+            background: none;
+            border: none;
+            color: #c72535;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 30px;
+            transition: 0.1s;
+        }
+
+        .cancel-btn:hover {
+            background: #ffefef;
+            transform: scale(1.05);
+        }
+
+        .empty-msg {
+            text-align: center;
+            color: #8ea9bb;
+            font-size: 0.8rem;
+            padding: 0.8rem;
+            font-style: italic;
+        }
+
+        footer {
+            background: #f8fbfe;
+            text-align: center;
+            font-size: 0.7rem;
+            padding: 0.9rem;
+            color: #6688a0;
+            border-top: 1px solid #e9f0f5;
+        }
+
+        @media (max-width: 750px) {
+            .slots-panel, .booking-panel {
+                flex: auto;
+                width: 100%;
+            }
+            .booking-panel {
+                border-left: none;
+                border-top: 1px solid #e0ecf3;
+            }
+            .control-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="booking-app">
+    <div class="app-header">
+        <h1>📅 Appointment Booking</h1>
+        <p>Select a date, choose an open time slot, and fill in your details</p>
+    </div>
+
+    <div class="control-bar">
+        <div class="date-selector">
+            <label>📆 Appointment date</label>
+            <input type="date" id="appointmentDate">
+        </div>
+        <div class="stats-badge">
+            📋 Booked today: <span id="totalBookedCount">0</span>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- Time slots section -->
+        <div class="slots-panel">
+            <div class="section-title">⏰ Available time slots</div>
+            <div id="slotsContainer" class="time-slots-grid">
+                <div class="slot-card">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Booking form -->
+        <div class="booking-panel">
+            <h3>✍️ New appointment</h3>
+            <div class="input-group">
+                <label>Full name *</label>
+                <input type="text" id="clientName" placeholder="e.g. Sarah Johnson" autocomplete="off">
+            </div>
+            <div class="input-group">
+                <label>Email / Phone</label>
+                <input type="text" id="clientContact" placeholder="sarah@example.com or phone">
+            </div>
+            <div class="selected-slot-info" id="selectedSlotDisplay">
+                ⚡ No time slot selected
+            </div>
+            <button id="confirmBookingButton" class="btn-primary">✔ Confirm booking</button>
+            <button id="clearSlotButton" class="btn-primary btn-secondary">🗑 Clear selection</button>
+
+            <div class="appointments-list">
+                <h4>📋 Appointments for selected date</h4>
+                <div id="appointmentsList">
+                    <div class="empty-msg">No appointments yet</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer>
+        🔔 Simple appointment booking — click any free slot, enter name, confirm. You can cancel anytime.
+    </footer>
+</div>
+
+<script>
+    // -------------------- DATA MODEL --------------------
+    // Booking storage: bookings[dateString] = { "14:00": { name, contact, slot }, ... }
+    let appointmentBookings = {};
+
+    // Predefined available time slots (9:00 to 18:00)
+    const TIME_SLOTS_LIST = [
+        "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00"
+    ];
+
+    // Helper: get current date in YYYY-MM-DD (local)
+    function getCurrentLocalDate() {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Ensure date exists in bookings object
+    function ensureDateBookings(date) {
+        if (!appointmentBookings[date]) {
+            appointmentBookings[date] = {};
+        }
+    }
+
+    // Get all bookings for a specific date
+    function getBookingsByDate(date) {
+        return appointmentBookings[date] || {};
+    }
+
+    // Check if slot is booked
+    function isSlotBooked(date, slotTime) {
+        const dateBookings = getBookingsByDate(date);
+        return !!dateBookings[slotTime];
+    }
+
+    // Add new booking
+    function addNewBooking(date, slotTime, clientName, clientContact) {
+        if (!clientName || clientName.trim() === "") {
+            alert("❌ Please enter your name to book an appointment.");
+            return false;
+        }
+        if (isSlotBooked(date, slotTime)) {
+            alert(`⚠️ Sorry, the slot ${slotTime} is already booked. Please choose another.`);
+            return false;
+        }
+        ensureDateBookings(date);
+        appointmentBookings[date][slotTime] = {
+            name: clientName.trim(),
+            contact: clientContact ? clientContact.trim() : "",
+            slot: slotTime,
+            bookedAt: Date.now()
+        };
+        return true;
+    }
+
+    // Cancel a booking
+    function cancelExistingBooking(date, slotTime) {
+        if (appointmentBookings[date] && appointmentBookings[date][slotTime]) {
+            delete appointmentBookings[date][slotTime];
+            return true;
+        }
+        return false;
+    }
+
+    // Get array of bookings for a date (sorted by time)
+    function getSortedBookingsForDate(date) {
+        const dateBook = getBookingsByDate(date);
+        return Object.entries(dateBook).map(([slot, details]) => ({
+            slot: slot,
+            name: details.name,
+            contact: details.contact
+        })).sort((a, b) => a.slot.localeCompare(b.slot));
+    }
+
+    // -------------------- UI STATE --------------------
+    let currentSelectedDate = getCurrentLocalDate();   // active date
+    let currentSelectedSlot = null;                    // e.g. "14:00"
+
+    // DOM elements
+    const datePicker = document.getElementById('appointmentDate');
+    const slotsContainer = document.getElementById('slotsContainer');
+    const totalBookedSpan = document.getElementById('totalBookedCount');
+    const selectedSlotDisplay = document.getElementById('selectedSlotDisplay');
+    const confirmBtn = document.getElementById('confirmBookingButton');
+    const clearBtn = document.getElementById('clearSlotButton');
+    const appointmentsListDiv = document.getElementById('appointmentsList');
+    const clientNameInput = document.getElementById('clientName');
+    const clientContactInput = document.getElementById('clientContact');
+
+    // Helper: update total booked counter for current date
+    function updateTotalBookedCount() {
+        const bookingsForDate = getBookingsByDate(currentSelectedDate);
+        const bookedCount = Object.keys(bookingsForDate).length;
+        totalBookedSpan.innerText = bookedCount;
+    }
+
+    // Render all time slots (based on current date + selected slot)
+    function renderTimeSlots() {
+        if (!slotsContainer) return;
+        slotsContainer.innerHTML = '';
+
+        for (let slot of TIME_SLOTS_LIST) {
+            const booked = isSlotBooked(currentSelectedDate, slot);
+            const isSelected = (currentSelectedSlot === slot && !booked);
+            const slotDiv = document.createElement('div');
+            slotDiv.className = 'slot-card';
+            if (booked) slotDiv.classList.add('slot-booked');
+            if (isSelected) slotDiv.classList.add('slot-selected');
+            slotDiv.textContent = slot;
+
+            if (!booked) {
+                slotDiv.addEventListener('click', () => {
+                    // select this slot
+                    currentSelectedSlot = slot;
+                    renderTimeSlots();      // re-render to update highlight
+                    updateSelectedSlotInfo();
+                });
+            } else {
+                slotDiv.title = `Booked by ${getBookingsByDate(currentSelectedDate)[slot]?.name || 'someone'}`;
+            }
+            slotsContainer.appendChild(slotDiv);
+        }
+    }
+
+    // Update sidebar info about selected slot
+    function updateSelectedSlotInfo() {
+        if (currentSelectedSlot) {
+            selectedSlotDisplay.innerHTML = `🕒 <strong>${currentSelectedSlot}</strong><br><small>Enter your details and confirm</small>`;
+        } else {
+            selectedSlotDisplay.innerHTML = `⚡ No slot selected<br><small>Click any available time above</small>`;
+        }
+    }
+
+    // Render appointment list for current date with cancel buttons
+    function renderAppointmentsList() {
+        if (!appointmentsListDiv) return;
+        const bookingsArray = getSortedBookingsForDate(currentSelectedDate);
+        
+        if (bookingsArray.length === 0) {
+            appointmentsListDiv.innerHTML = `<div class="empty-msg">✨ No appointments for ${currentSelectedDate}</div>`;
+            return;
+        }
+
+        const listWrapper = document.createElement('div');
+        bookingsArray.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'booking-item';
+            const contactInfo = item.contact ? ` · ${escapeSimple(item.contact)}` : '';
+            itemDiv.innerHTML = `
+                <div class="booking-info">
+                    <strong>${item.slot}</strong> — ${escapeSimple(item.name)}${contactInfo}
+                </div>
+                <button class="cancel-btn" data-slot="${item.slot}" title="Cancel appointment">✖</button>
+            `;
+            listWrapper.appendChild(itemDiv);
+        });
+        
+        appointmentsListDiv.innerHTML = '';
+        appointmentsListDiv.appendChild(listWrapper);
+        
+        // attach cancel events
+        document.querySelectorAll('.cancel-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const slotToCancel = btn.getAttribute('data-slot');
+                if (slotToCancel && confirm(`Cancel appointment at ${slotToCancel} on ${currentSelectedDate}?`)) {
+                    const success = cancelExistingBooking(currentSelectedDate, slotToCancel);
+                    if (success) {
+                        // if current selected slot was the cancelled one, clear selection
+                        if (currentSelectedSlot === slotToCancel) {
+                            currentSelectedSlot = null;
+                            updateSelectedSlotInfo();
+                        }
+                        // refresh all UI
+                        refreshAllUI();
+                    } else {
+                        alert("Could not cancel appointment.");
+                    }
+                }
+            });
+        });
+    }
+
+    // Escape simple HTML
+    function escapeSimple(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Full UI refresh
+    function refreshAllUI() {
+        renderTimeSlots();
+        renderAppointmentsList();
+        updateTotalBookedCount();
+        updateSelectedSlotInfo();
+    }
+
+    // Confirm booking action
+    function handleConfirmBooking() {
+        if (!currentSelectedSlot) {
+            alert("Please select a time slot first.");
+            return;
+        }
+        
+        const slot = currentSelectedSlot;
+        // double-check availability
+        if (isSlotBooked(currentSelectedDate, slot)) {
+            alert(`The slot ${slot} is no longer available. Please choose another.`);
+            currentSelectedSlot = null;
+            refreshAllUI();
+            return;
+        }
+        
+        const name = clientNameInput.value.trim();
+        if (name === "") {
+            alert("❌ Please enter your full name to book the appointment.");
+            return;
+        }
+        const contact = clientContactInput.value.trim();
+        
+        const success = addNewBooking(currentSelectedDate, slot, name, contact);
+        if (success) {
+            // clear form and selection after successful booking
+            clientNameInput.value = "";
+            clientContactInput.value = "";
+            currentSelectedSlot = null;
+            refreshAllUI();
+            alert(`✅ Appointment confirmed!\n📅 ${currentSelectedDate} at ${slot}\n👤 ${name}`);
+        } else {
+            // if failure due to race condition, refresh
+            refreshAllUI();
+        }
+    }
+    
+    // Clear current slot selection
+    function handleClearSelection() {
+        currentSelectedSlot = null;
+        refreshAllUI();
+    }
+
+    // Date changed handler
+    function onDateChanged() {
+        const newDate = datePicker.value;
+        if (!newDate) return;
+        if (newDate !== currentSelectedDate) {
+            currentSelectedDate = newDate;
+            // reset selected slot when date changes
+            currentSelectedSlot = null;
+            ensureDateBookings(currentSelectedDate);
+            refreshAllUI();
+        } else {
+            // same date, but ensure init
+            ensureDateBookings(currentSelectedDate);
+            refreshAllUI();
+        }
+    }
+
+    // Add some demo appointments to showcase functionality (without being intrusive)
+    function seedDemoAppointments() {
+        const today = getCurrentLocalDate();
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tomorrow = tomorrowDate.toISOString().slice(0,10);
+        
+        // Only add demo if no bookings exist for today
+        if (Object.keys(getBookingsByDate(today)).length === 0) {
+            ensureDateBookings(today);
+            if (!appointmentBookings[today]["10:00"]) {
+                appointmentBookings[today]["10:00"] = { name: "Emma Watson", contact: "emma@demo.com", slot: "10:00" };
+            }
+            if (!appointmentBookings[today]["14:30"]) {
+                appointmentBookings[today]["14:30"] = { name: "Michael Chen", contact: "+1 234 5678", slot: "14:30" };
+            }
+        }
+        // add a demo for tomorrow (just to show cross-day persistence, without overriding)
+        if (Object.keys(getBookingsByDate(tomorrow)).length === 0) {
+            ensureDateBookings(tomorrow);
+            if (!appointmentBookings[tomorrow]["11:00"]) {
+                appointmentBookings[tomorrow]["11:00"] = { name: "Demo Client", contact: "hello@booking.com", slot: "11:00" };
+            }
+        }
+    }
+    
+    // Initialize the app
+    function init() {
+        // set default date picker
+        datePicker.value = getCurrentLocalDate();
+        currentSelectedDate = getCurrentLocalDate();
+        
+        // seed demo data to show real functionality
+        seedDemoAppointments();
+        ensureDateBookings(currentSelectedDate);
+        
+        // initial render
+        refreshAllUI();
+        
+        // add event listeners
+        datePicker.addEventListener('change', onDateChanged);
+        confirmBtn.addEventListener('click', handleConfirmBooking);
+        clearBtn.addEventListener('click', handleClearSelection);
+        
+        // optional: clean-up any external issues
+    }
+    
+    // start
+    init();
+</script>
+</body>
+</html>
